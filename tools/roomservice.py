@@ -34,7 +34,7 @@ except ImportError:
 
 # Config
 # set this to the default remote to use in repo
-default_rem = "github"
+default_rem = "omnirom"
 # set this to the default revision to use (branch/tag name)
 default_rev = "android-4.3"
 # set this to the remote that you use for projects from your team repos
@@ -55,7 +55,7 @@ def check_repo_exists(git_data):
 # Note that this can only be done 5 times per minute
 def search_github_for_device(device):
     git_search_url = "https://api.github.com/search/repositories" \
-                     "?q=%40{}+android_device+{}".format(android_team, device)
+                     "?q=%40{}+android_device+{}"+fork:true(android_team, device)
     git_req = urllib.request.Request(git_search_url)
     # this api is a preview at the moment. accept the custom media type
     git_req.add_header('Accept', 'application/vnd.github.preview')
@@ -90,10 +90,12 @@ def get_device_url(git_data):
                     "roomservice".format(device, android_team))
 
 
-def parse_device_directory(device_url):
+def parse_device_directory(device_url,device):
     to_strip = "android_device"
     repo_name = device_url[device_url.index(to_strip) + len(to_strip):]
+    repo_name = repo_name[:repo_name.index(device)]
     repo_dir = repo_name.replace("_", "/")
+    repo_dir = repo_dir + device
     return "device{}".format(repo_dir)
 
 
@@ -101,7 +103,8 @@ def parse_device_directory(device_url):
 def iterate_manifests():
     files = []
     for file in os.listdir(local_manifest_dir):
-        files.append(os.path.join(local_manifest_dir, file))
+        if file.endswith(".xml"):
+	    files.append(os.path.join(local_manifest_dir, file))
     files.append('.repo/manifest.xml')
     for file in files:
         try:
@@ -198,7 +201,7 @@ def parse_device_from_folder(device):
     elif len(search) == 1:
         location = search[0]
     else:
-        print("you device can't be found in device sources..")
+        print("Your device can't be found in device sources..")
         location = parse_device_from_manifest(device)
     return location
 
@@ -254,7 +257,7 @@ def fetch_dependencies(device):
 def fetch_device(device):
     git_data = search_github_for_device(device)
     device_url = get_device_url(git_data)
-    device_dir = parse_device_directory(device_url)
+    device_dir = parse_device_directory(device_url,device)
     project = create_manifest_project(device_url,
                                       device_dir,
                                       remote=default_team_rem)
